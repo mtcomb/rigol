@@ -7,6 +7,11 @@ Download data from a Rigol DS1102E oscilloscope and graph with matplotlib
  
 https://github.com/alexforencich/python-usbtmc
  
+mtcomb - 2014-04-12
+
+based on
+http://scruss.com/blog/2013/12/15/my-raspberry-pi-talks-to-my-oscilloscope/
+
 scruss - 2013-12-20
   
 based on
