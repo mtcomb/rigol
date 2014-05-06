@@ -9,6 +9,7 @@ import h5py
 
 from filechooser import filechooser
 from ds1102e import ds1102e
+from cursor import DataCursor
 
 class scope(object):
   def __init__(self):
@@ -16,6 +17,7 @@ class scope(object):
     self.scope = ds1102e()
     self.data = {}
     self.info = []
+    self.cursors = []
 
     win = gtk.Window()
     win.connect("destroy", lambda x: gtk.main_quit())
@@ -59,10 +61,16 @@ class scope(object):
       print item[0]+":\t", item[1]
 
     # Plot the data
-    self.ax.lines=[]
+    self.ax.lines = []
     self.ax.plot(time,data1,'b-')
     self.ax.plot(time,data2,'g-')
     self.ax.set_xlim(time[0], time[-1])
+    for cursor in self.cursors:
+      cursor.remove()
+    self.cursors = []
+    for line in self.ax.lines:
+      self.cursors.append(DataCursor(line))
+    self.ax.grid(True)
     self.canvas.draw()
 
   def save(self,event):
