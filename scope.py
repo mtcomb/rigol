@@ -1,8 +1,13 @@
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_gtkagg import FigureCanvasGTKAgg as FigureCanvas
-from matplotlib.backends.backend_gtkagg import NavigationToolbar2GTKAgg as NavigationToolbar
+import matplotlib
+matplotlib.use('GTK4Agg')
+import gi
+gi.require_version('Gtk', '4.0')
+from gi.repository import Gtk
 
-import gtk
+from matplotlib.backends.backend_gtk4 import NavigationToolbar2GTK4 as NavigationToolbar
+from matplotlib.backends.backend_gtk4agg import FigureCanvasGTK4Agg as FigureCanvas
+
+from matplotlib.figure import Figure
 
 import numpy as np
 import h5py
@@ -13,42 +18,43 @@ from cursor import DataCursor
 
 class scope(object):
   def __init__(self):
-
     self.scope = ds1102e()
     self.data = {}
     self.info = []
     self.cursors = []
 
-    win = gtk.Window()
-    win.connect("destroy", lambda x: gtk.main_quit())
-    win.set_default_size(800,600)
-    win.set_title("Rigol DS1102E")
+  def on_activate(self, app):
+    self.win = Gtk.ApplicationWindow(application=app)
+    self.win.connect("destroy", lambda x: Gtk.main_quit())
+    self.win.set_default_size(800,600)
+    self.win.set_title("Rigol DS1102E")
 
-    vbox = gtk.VBox()
-    win.add(vbox)
+    vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+    self.win.set_child(vbox)
 
     self.fig = Figure(figsize=(5,4))
     self.ax = self.fig.add_subplot(111)
     self.ax.set_ylabel("Voltage (V)")
     self.ax.set_xlabel("Time (S)")
 
-    self.canvas = FigureCanvas(self.fig)  # a gtk.DrawingArea
-    vbox.pack_start(self.canvas)
+    self.canvas = FigureCanvas(self.fig)  # a Gtk.DrawingArea
+    vbox.prepend(self.canvas)
 
-    hbox = gtk.HBox()
-    button = gtk.Button('Capture')
-    button.connect("pressed", self.capture)
-    hbox.pack_start(button, True, True)
-    button = gtk.Button('Save')
-    button.connect("pressed", self.save)
-    hbox.pack_start(button, True, True)
-    vbox.pack_start(hbox, False, False)
+    hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+    button = Gtk.Button(label="Capture")
+    button.connect("clicked", self.capture)
+    hbox.prepend(button) #, True, True)
+    button = Gtk.Button(label="Save")
+    button.connect("clicked", self.save)
+    hbox.prepend(button)
+    vbox.prepend(hbox)
 
-    self.toolbar = NavigationToolbar(self.canvas, win)
-    vbox.pack_start(self.toolbar, False, False)
+    self.toolbar = NavigationToolbar(self.canvas, self.win)
+    vbox.prepend(self.toolbar)
 
-    win.show_all()
-    gtk.main()
+    self.dialog = filechooser()
+
+    self.win.present()
 
   def capture(self,event):
     [time,data1,data2,info]=self.scope.read()
@@ -58,30 +64,36 @@ class scope(object):
     self.info  = info
 
     for item in self.info:
-      print item[0]+":\t", item[1]
+      print(item[0]+":\t", item[1])
 
     # Plot the data
-    self.ax.lines = []
-    self.ax.plot(time,data1,'b-')
-    self.ax.plot(time,data2,'g-')
+    lines = []
+    lines.extend(self.ax.plot(time,data1,'b-'))
+    lines.extend(self.ax.plot(time,data2,'g-'))
     self.ax.set_xlim(time[0], time[-1])
     for cursor in self.cursors:
       cursor.remove()
     self.cursors = []
-    for line in self.ax.lines:
+    for line in lines:
       self.cursors.append(DataCursor(line))
     self.ax.grid(True)
     self.canvas.draw()
 
-  def save(self,event):
-    filename = filechooser()
-    if filename:
-      f=h5py.File(filename,'w')
-      for item in self.data.iteritems():
+  def save(self, event):
+    def save_cb(dlg, result):
+      sfile = dlg.save_finish(result)
+      f=h5py.File(sfile.get_path(),'w')
+      for item in self.data.items():
         f[item[0]]=item[1]
       for item in self.info:
         f[item[0]]=item[1]
       f.close()
 
+    self.dialog.save(self.win, None, save_cb)
+
+
 if __name__ == '__main__':
+  app = Gtk.Application()
   s=scope()
+  app.connect("activate", s.on_activate)
+  app.run()
