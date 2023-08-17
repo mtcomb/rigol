@@ -27,9 +27,7 @@ class DataCursor(object):
         self.annotations.append(self.annotate(self.ax))
         event.canvas.draw()
       elif button == 3 and len(self.annotations):
-        dist = map(lambda a:
-                   (self.x-a.xy[0])**2,#+(self.y-a.xy[1])**2,
-                   self.annotations)
+        dist = [(self.x-a.xy[0])**2 for a in self.annotations]
         ind, _ = min(enumerate(dist),key=lambda x:x[1])
         self.annotations.pop(ind).remove()
         event.canvas.draw()
@@ -45,7 +43,7 @@ class DataCursor(object):
     time = self.x
     if (abs(time) < 1e-3):
         time = time * 1e6
-        tUnit = u"\u00B5\u0053"
+        tUnit = "\u00B5\u0053"
     elif (abs(time) < 1):
         time = time * 1e3
         tUnit = "mS"

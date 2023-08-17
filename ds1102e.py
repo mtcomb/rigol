@@ -40,19 +40,19 @@ class ds1102e(object):
     #instr.write(":WAV:POIN:MODE NOR")
   
     # first ten bytes are header, so skip
-    rawdata1 = self.instr.ask_raw(":WAV:DATA? CHAN1")[10:]
-    rawdata2 = self.instr.ask_raw(":WAV:DATA? CHAN2")[10:]
+    rawdata1 = self.instr.ask_raw(":WAV:DATA? CHAN1".encode("ascii"))[10:]
+    rawdata2 = self.instr.ask_raw(":WAV:DATA? CHAN2".encode("ascii"))[10:]
     data_size = len(rawdata1)
   
     # get metadata
-    sample_rate = float(self.instr.ask_raw(':ACQ:SAMP?'))
-    timescale   = float(self.instr.ask_raw(":TIM:SCAL?"))
-    timeoffset  = float(self.instr.ask_raw(":TIM:OFFS?"))
-    voltscale1  = float(self.instr.ask_raw(':CHAN1:SCAL?'))
-    voltoffset1 = float(self.instr.ask_raw(":CHAN1:OFFS?"))
+    sample_rate = float(self.instr.ask_raw(':ACQ:SAMP?'.encode("ascii")))
+    timescale   = float(self.instr.ask_raw(":TIM:SCAL?".encode("ascii")))
+    timeoffset  = float(self.instr.ask_raw(":TIM:OFFS?".encode("ascii")))
+    voltscale1  = float(self.instr.ask_raw(':CHAN1:SCAL?'.encode("ascii")))
+    voltoffset1 = float(self.instr.ask_raw(":CHAN1:OFFS?".encode("ascii")))
   
-    voltscale2  = float(self.instr.ask_raw(':CHAN2:SCAL?'))
-    voltoffset2 = float(self.instr.ask_raw(":CHAN2:OFFS?"))
+    voltscale2  = float(self.instr.ask_raw(':CHAN2:SCAL?'.encode("ascii")))
+    voltoffset2 = float(self.instr.ask_raw(":CHAN2:OFFS?".encode("ascii")))
   
     # show metadata
     info=[("Data size"          ,data_size),
@@ -83,7 +83,7 @@ class ds1102e(object):
     '''
     if (time[-1] < 1e-3):
         time = time * 1e6
-        tUnit = u"\u00B5\u0053"
+        tUnit = u"\\u00B5\\u0053"
     elif (time[-1] < 1):
         time = time * 1e3
         tUnit = "mS"
